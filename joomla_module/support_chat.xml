@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension
+	type="module"
+	version="3.5"
+	client="site"
+	method="upgrade">
+	<name>Support Chat</name>
+	<author>Code in bag</author>
+	<license>None</license>
+	<version>1.0</version>
+	<description>AI Support Chat</description>
+	<files>
+		<filename module="support_chat">support_chat.php</filename>
+		<filename>support_chat.xml</filename>
+		<filename>avatar.png</filename>
+		<filename>human.png</filename>
+	</files>
+</extension>
