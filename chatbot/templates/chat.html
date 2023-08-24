@@ -1,0 +1,28 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ваш веб-сайт</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}"> 
+</head>
+<body>
+    <div class="chat-container">
+        <button id="chat-button">Чат</button>
+        <div id="chat-container"> 
+            <div id="chat-header">
+                <h3>Чат с ботом</h3>
+                <button id="close-button">Закрыть</button>
+            </div>
+            <div id="chat-messages"></div>
+            <div id="message-box">
+                <input type="text" id="message-input" placeholder="Введите ваш вопрос">
+                <button id="send-button">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+    <script src="{% static 'scripts.js' %}"></script> 
+</body>
+</html>
