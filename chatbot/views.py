@@ -1,61 +1,23 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-# import stanfordnlp
 import spacy
 import pandas as pd
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.conf import settings
+from llama_index import ServiceContext, LLMPredictor, PromptHelper
+from llama_index.llms import LlamaCPP
+from llama_index.text_splitter import TokenTextSplitter
+from llama_index.node_parser import SimpleNodeParser
 import os
-
-# stanfordnlp.download("ru")
-# # StanfordNLP
-# nlp = stanfordnlp.Pipeline(lang="ru", processors="tokenize")
-# nlp = spacy.load('ru_core_news_sm')
-
-# responses = {
-#     "привет": "Привет! Чем могу помочь?",
-#     "как дела?": "У меня всё отлично, спасибо!",
-#     "пока": "До свидания! Если у вас будут еще вопросы, обращайтесь.",
-# }
+import pandas as pd
+from langchain.embeddings import HuggingFaceEmbeddings
+from llama_index import GPTVectorStoreIndex, ServiceContext, download_loader, load_index_from_storage
 def chat_interface(request):
     return render(request, 'chat.html')
 
-# @csrf_exempt
-# def chat_view(request):
-#     if (request.headers.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' 
-#         and request.method == 'POST'):
-#         user_message = request.POST.get("message", "").lower()
-#         doc = nlp(user_message)
-#         keywords = [token.text for token in doc if token.is_alpha]
-        
-#         bot_response = "Извините, я не могу понять ваш вопрос."
-#         # for sentence in doc.sentences:
-#         #     for word in sentence.words:
-#         #         if word.lemma.lower() in responses:
-#         #             bot_response = responses[word.lemma.lower()]
-#         #             break
-#         for keyword in keywords:
-#             if keyword in responses:
-#                 bot_response = responses[keyword]
-#                 break
-#         response_data = {
-#             "user_message": user_message,
-#             "bot_response": bot_response,
-#         }
 
-#         return JsonResponse(response_data)
-#     else:
-#         return JsonResponse({"message": "hello"})
-# from django.http import JsonResponse
 
-# responses = {
-#     "привет": "Привет! Чем могу помочь?",
-#     "как дела?": "У меня всё отлично, спасибо!",
-#     "пока": "До свидания! Если у вас будут еще вопросы, обращайтесь.",
-# }
-
-@csrf_exempt
 # def chat_view(request):
 #     if request.method == 'POST':
 #         user_message = request.POST.get("message", "").lower()
@@ -69,6 +31,47 @@ def chat_interface(request):
 #         return HttpResponse(response_data["bot_response"])
 
 
+# def chat_view(request):
+#     if request.method == 'POST':
+#         user_message = request.POST.get("message", "").lower()
+
+#         faq_file_path = os.path.join(settings.BASE_DIR, 'faq.xlsx')
+#         faq_data = pd.read_excel(faq_file_path, engine='openpyxl')
+        
+#         bot_response = find_bot_response(user_message, faq_data)
+
+#         response_data = {
+#             "user_message": user_message,
+#             "bot_response": bot_response,
+#         }
+
+#         return HttpResponse(response_data["bot_response"])
+
+# def find_bot_response(user_message, faq_data):
+#     best_match = None
+#     max_similarity = 0.0
+#     nlp = spacy.load("ru_core_news_sm")
+#     for index, row in faq_data.iterrows():
+#         question = row['QUESTION'].lower()
+#         response = row['ANSWER']
+
+#         doc_user = nlp(user_message)
+#         doc_question = nlp(question)
+
+#         similarity = doc_user.similarity(doc_question)
+
+#         if similarity > max_similarity:
+#             max_similarity = similarity
+#             best_match = response
+
+#     if max_similarity < 0.5:
+#         return "Извините, я не могу понять ваш вопрос."
+
+#     return best_match
+
+
+
+@csrf_exempt
 def chat_view(request):
     if request.method == 'POST':
         user_message = request.POST.get("message", "").lower()
@@ -87,25 +90,44 @@ def chat_view(request):
 
 def find_bot_response(user_message, faq_data):
     best_match = None
-    max_similarity = 0.0
-    nlp = spacy.load("ru_core_news_sm")
+    min_distance = float('inf')
+
     for index, row in faq_data.iterrows():
         question = row['QUESTION'].lower()
         response = row['ANSWER']
 
-        doc_user = nlp(user_message)
-        doc_question = nlp(question)
+        distance = levenshtein(user_message, question)
 
-        similarity = doc_user.similarity(doc_question)
-
-        if similarity > max_similarity:
-            max_similarity = similarity
+        if distance < min_distance:
+            min_distance = distance
             best_match = response
 
-    if max_similarity < 0.5:
+    if min_distance > len(user_message) / 2:
         return "Извините, я не могу понять ваш вопрос."
 
     return best_match
+
+def levenshtein(s1, s2):
+    if len(s1) < len(s2):
+        return levenshtein(s2, s1)
+
+    if len(s2) == 0:
+        return len(s1)
+
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+
+    return previous_row[-1]
+
+
+
 
 
 
