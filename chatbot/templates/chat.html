@@ -106,7 +106,7 @@
         padding: 15px;
         border-radius: 15px;
         max-width: 60%;
-        word-break: break-word;
+        word-break: normal;
     }
     .chat-support-message {
         justify-self: left;
@@ -122,7 +122,7 @@
         padding: 15px;
         border-radius: 15px;
         max-width: 60%;
-        word-break: break-word;
+        word-break: normal;
     }
     .chat-sender {
         display: grid;
@@ -154,7 +154,7 @@
         </div>
         <div class="chat-history">
             <div class="chat-support-message">
-                <img class="avatar" src="modules/support_chat/avatar.png" alt="avatar"/>
+                <img class="avatar" src="{% static 'avatar.png' %}" alt="avatar" />
                 <div>Здраствуйте! Меня зовут Ярослав. Буду рад избавить Вас от страданий и найти необходимую информацию! Пожалуйста, напишите название услуги или ведомства</div>
             </div>
         </div>
@@ -216,7 +216,7 @@
             message_block.innerText = message;
             avatar = document.createElement('img');
             avatar.className = 'avatar';
-            avatar.setAttribute('src', '/test/modules/support_chat/human.png');
+            avatar.setAttribute('src', '{% static "human.png" %}');
             avatar.setAttribute('alt', 'avatar');
             message_row.appendChild(message_block);
             message_row.appendChild(avatar);
@@ -231,7 +231,7 @@
             message_block.innerText = message;
             avatar = document.createElement('img');
             avatar.className = 'avatar';
-            avatar.setAttribute('src', '/test/modules/support_chat/avatar.png');
+            avatar.setAttribute('src', '{% static "avatar.png" %}');
             avatar.setAttribute('alt', 'avatar');
             message_row.appendChild(avatar);
             message_row.appendChild(message_block);
