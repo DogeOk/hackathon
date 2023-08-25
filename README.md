@@ -29,7 +29,11 @@ python -m venv hackathon
 ```
 pip install -r requirements.txt
 ```
-7. Запустить проект:
+7. Установить модель
+```
+python -m spacy download ru_core_news_sm
+```
+8. Запустить проект:
 ```
 python manage.py runserver
 ```

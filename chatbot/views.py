@@ -90,8 +90,8 @@ def find_bot_response(user_message, faq_data):
     max_similarity = 0.0
     nlp = spacy.load("ru_core_news_sm")
     for index, row in faq_data.iterrows():
-        question = row['Вопрос'].lower()
-        response = row['Ответ']
+        question = row['QUESTION'].lower()
+        response = row['ANSWER']
 
         doc_user = nlp(user_message)
         doc_question = nlp(question)
