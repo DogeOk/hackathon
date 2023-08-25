@@ -3,6 +3,7 @@ from django.http import JsonResponse
 # import stanfordnlp
 import spacy
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
 
 
 # stanfordnlp.download("ru")
@@ -63,7 +64,7 @@ def chat_view(request):
             "bot_response": bot_response,
         }
 
-        return JsonResponse(response_data)
+        return HttpResponse(response_data["bot_response"])
 
 
 
