@@ -130,6 +130,3 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-
-faq_file_path = os.path.join(BASE_DIR, 'full_data.csv')
-model_file_path = os.path.join(BASE_DIR, 'llama-2-13b-chat.ggmlv3.q5_0.bin')
