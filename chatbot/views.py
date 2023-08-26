@@ -6,8 +6,7 @@ from fuzzywuzzy import fuzz
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from gensim.models import Word2Vec
-from pymystem3 import Mystem
-from joblib import dump, load
+from joblib import load
 import os
 import re
 import numpy as np
@@ -15,6 +14,13 @@ import torch
 import pandas as pd
 import spacy
 import transformers
+
+
+toxic_answer = (f"Ай-яй-яй, как некрасиво! Вы же в культурной столице!" 
+                f"Введите, пожалуйста, корректный запрос 🤓")
+not_found_answer = (f"Как истинный лев, я прошерстил всю библиотеку, но" 
+                    f"так и смог найти подходящий ответ. Смилуйтесь," 
+                    f"уточните Ваш запрос! 🥺")
 
 
 def chat_interface(request):
@@ -27,7 +33,7 @@ def chat_view(request):
         user_message = request.POST.get("message", "").lower()
 
         if toxic_predict(user_message):
-            return HttpResponse("Ай-яй-яй, как некрасиво! Вы же в культурной столице! Введите, пожалуйста, корректный запрос 🤓")
+            return HttpResponse(toxic_answer)
 
         faq_file_path = os.path.join(settings.BASE_DIR, 'full_data.csv')
         faq_data = pd.read_csv(faq_file_path)
@@ -165,27 +171,30 @@ def find_bot_response(user_message, faq_data):
     #SpaCy
     spacy_match = find_tfidf_match(user_message, faq_data)
 
-    best_match = None
+    best_match = None  
     
-    if levenshtein_similarity > max_similarity:
-        best_match = levenshtein_match
-    elif word2vec_match:
-        best_match = word2vec_match
-    elif tfidf_match:
-        best_match = tfidf_match
-    else:
-        best_match = spacy_match   
-    
-    if not best_match:
-        return "Извините, я не могу понять ваш вопрос."
+    try:
+        if levenshtein_similarity > max_similarity:
+            best_match = levenshtein_match
+        elif word2vec_match:
+            best_match = word2vec_match
+        elif tfidf_match:
+            best_match = tfidf_match
+        else:
+            best_match = spacy_match   
 
-    return faq_data.loc[faq_data['question'] == best_match]['answer'].values[0]
-    
+        return (faq_data.loc[faq_data['question'] == best_match]['answer']\
+                .values[0])
+    except IndexError:
+        return(not_found_answer) 
+   
 
 def toxic_predict(message):
     PATH = 's-nlp/russian_toxicity_classifier'
     tokenizer = transformers.BertTokenizer.from_pretrained(PATH)
-    message = tokenizer.encode(message, add_special_tokens=True, max_length=512, truncation=True)
+    message = tokenizer.encode(message, add_special_tokens=True, 
+                               max_length=512, 
+                               truncation=True)
     max_len = 512
     padded = np.array([message+[0]*(max_len - len(message))])
     attention_mask = np.where(padded != 0, 1, 0)
@@ -194,10 +203,15 @@ def toxic_predict(message):
     embeddings = []
     for i in range(padded.shape[0] // batch_size):
             batch = torch.LongTensor(padded[batch_size*i:batch_size*(i+1)])
-            attention_mask_batch = torch.LongTensor(attention_mask[batch_size*i:batch_size*(i+1)])
+            attention_mask_batch = torch.LongTensor(
+                attention_mask[batch_size*i:batch_size*(i+1)]
+                )
 
             with torch.no_grad():
-                batch_embeddings = model(batch, attention_mask=attention_mask_batch)
+                batch_embeddings = model(batch, 
+                                         attention_mask=attention_mask_batch
+                                         )
 
             embeddings.append(batch_embeddings[0][:,0,:].numpy())
-    return load('./models/toxic_model.joblib').predict(np.concatenate(embeddings))[0]
+    return (load('./models/toxic_model.joblib')\
+            .predict(np.concatenate(embeddings))[0])
