@@ -145,6 +145,29 @@
         align-self: center;
         cursor: pointer;
     }
+
+    .typing-indicator {
+    display: none;
+    margin-top: 10px;
+    grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .typing-indicator div {
+
+        background-color: #030100;
+        border-radius: 50%;
+
+
+        /* animation: typing 1s infinite; */
+    }
+
+    @keyframes typing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+
+
+
 </style>
 <body>
     <div class="chat-window">
@@ -157,6 +180,14 @@
                 <img class="avatar" src="{% static 'avatar.png' %}" alt="avatar" />
                 <div>Здраствуйте! Меня зовут Ярослав. Буду рад избавить Вас от страданий и найти необходимую информацию! Пожалуйста, напишите название услуги или ведомства</div>
             </div>
+
+            <div class="chat-support-message"> 
+                <div class="typing-indicator">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+             </div>
         </div>
         <div class="chat-sender">
             <textarea class="chat-input" rows="2" placeholder="Введите запрос..."></textarea>
@@ -241,11 +272,17 @@
         function sendMessage() {
             if (chat_input.value != '') {
                 addUserMessage(chat_input.value);
+
+                // Показываем индикатор загрузки (имитация набора)
+                showTypingIndicator();
+
                 xhr = new XMLHttpRequest();
                 xhr.open('POST', 'http://127.0.0.1:8000/chat/')
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === 4 && xhr.status === 200) {
+                        // Скрываем индикатор загрузки и отображаем ответ бота
+                        hideTypingIndicator();
                         addBotMessage(xhr.responseText);
                     }
                 }
@@ -253,6 +290,17 @@
                 chat_input.value = '';
             }
         }
+
+        function showTypingIndicator() {
+            const typingIndicator = document.querySelector('.typing-indicator');
+            typingIndicator.style.display = 'grid';
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.querySelector('.typing-indicator');
+            typingIndicator.style.display = 'none';
+        }
+
         chat_send_btn.addEventListener('click', function () {
             sendMessage();
         }, false);
