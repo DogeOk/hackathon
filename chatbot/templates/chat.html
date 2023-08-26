@@ -1,31 +1,5 @@
 {% load static %}
 
-<!--<!DOCTYPE html>
-<html>
-<head>
-    <title>Ваш веб-сайт</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}"> 
-</head>
-<body>
-    <div class="chat-container">
-        <button id="chat-button">Чат</button>
-        <div id="chat-container"> 
-            <div id="chat-header">
-                <h3>Чат с ботом</h3>
-                <button id="close-button">Закрыть</button>
-            </div>
-            <div id="chat-messages"></div>
-            <div id="message-box">
-                <input type="text" id="message-input" placeholder="Введите ваш вопрос">
-                <button id="send-button">Отправить</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
-    <script src="{% static 'scripts.js' %}"></script> 
-</body>
-</html>-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -101,7 +75,7 @@
         margin: 10px 10px;
         grid-gap: 10px;
     }
-    .chat-client-message div {
+    .chat-client-message .chat-text {
         background: #cea581;
         padding: 15px;
         border-radius: 15px;
@@ -117,7 +91,7 @@
         margin: 10px 10px;
         grid-gap: 10px;
     }
-    .chat-support-message div {
+    .chat-support-message .chat-text {
         background-color: #e7d4c2;
         padding: 15px;
         border-radius: 15px;
@@ -145,25 +119,44 @@
         align-self: center;
         cursor: pointer;
     }
-
     .typing-indicator {
-    display: none;
-    margin-top: 10px;
-    grid-template-columns: 1fr 1fr 1fr;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        width: 100%;
+        grid-gap: 7px;
     }
 
     .typing-indicator div {
-
         background-color: #030100;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
-
-
-        /* animation: typing 1s infinite; */
+    }
+    #typing-indicator-1 {
+        animation: typing-1 0.75s infinite ease-in-out;
+    }
+    #typing-indicator-2 {
+        animation: typing-2 0.75s infinite ease-in-out;
+    }
+    #typing-indicator-3 {
+        animation: typing-3 0.75s infinite ease-in-out;
     }
 
-    @keyframes typing {
-        0%, 100% { transform: translateY(0); }
+    @keyframes typing-1 {
+        0% { transform: translateY(0px); }
         50% { transform: translateY(-6px); }
+        100%  { transform: translateY(0px); }
+    }
+    @keyframes typing-2 {
+        0%  { transform: translateY(-3px); }
+        25%  { transform: translateY(0px); }
+        75% { transform: translateY(-6px); }
+        100% { transform: translateY(-3px); }
+    }
+    @keyframes typing-3 {
+        0%  { transform: translateY(-6px); }
+        50%  { transform: translateY(0px); }
+        100% { transform: translateY(-6px); }
     }
 
 
@@ -178,16 +171,8 @@
         <div class="chat-history">
             <div class="chat-support-message">
                 <img class="avatar" src="{% static 'avatar.png' %}" alt="avatar" />
-                <div>Здраствуйте! Меня зовут Ярослав. Буду рад избавить Вас от страданий и найти необходимую информацию! Пожалуйста, напишите название услуги или ведомства</div>
+                <div class="chat-text">Здраствуйте! Меня зовут Ярослав. Буду рад избавить Вас от страданий и найти необходимую информацию! Пожалуйста, напишите название услуги или ведомства</div>
             </div>
-
-            <div class="chat-support-message"> 
-                <div class="typing-indicator">
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                </div>
-             </div>
         </div>
         <div class="chat-sender">
             <textarea class="chat-input" rows="2" placeholder="Введите запрос..."></textarea>
@@ -245,6 +230,7 @@
             message_row.className = 'chat-client-message';
             message_block = document.createElement('div');
             message_block.innerText = message;
+            message_block.className = 'chat-text';
             avatar = document.createElement('img');
             avatar.className = 'avatar';
             avatar.setAttribute('src', '{% static "human.png" %}');
@@ -254,12 +240,13 @@
             chat_history.appendChild(message_row);
             chat_history.scrollTo(0, chat_history.scrollHeight);
         }
-        function addBotMessage(message) {
+        function addBotMessage() {
             chat_history = document.querySelector('.chat-history');
             message_row = document.createElement('div');
             message_row.className = 'chat-support-message';
             message_block = document.createElement('div');
-            message_block.innerText = message;
+            message_block.className = 'chat-text';
+            message_block.innerHTML = '<div class="typing-indicator"><div id="typing-indicator-1"></div><div id="typing-indicator-2"></div><div id="typing-indicator-3"></div></div>';
             avatar = document.createElement('img');
             avatar.className = 'avatar';
             avatar.setAttribute('src', '{% static "avatar.png" %}');
@@ -268,37 +255,22 @@
             message_row.appendChild(message_block);
             chat_history.appendChild(message_row);
             chat_history.scrollTo(0, chat_history.scrollHeight);
+            xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://127.0.0.1:8000/chat/')
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    message_block.innerText = xhr.responseText;
+                }
+            }
+            xhr.send('message=' + chat_input.value);
         }
         function sendMessage() {
             if (chat_input.value != '') {
                 addUserMessage(chat_input.value);
-
-                // Показываем индикатор загрузки (имитация набора)
-                showTypingIndicator();
-
-                xhr = new XMLHttpRequest();
-                xhr.open('POST', 'http://127.0.0.1:8000/chat/')
-                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        // Скрываем индикатор загрузки и отображаем ответ бота
-                        hideTypingIndicator();
-                        addBotMessage(xhr.responseText);
-                    }
-                }
-                xhr.send('message=' + chat_input.value);
+                addBotMessage();
                 chat_input.value = '';
             }
-        }
-
-        function showTypingIndicator() {
-            const typingIndicator = document.querySelector('.typing-indicator');
-            typingIndicator.style.display = 'grid';
-        }
-
-        function hideTypingIndicator() {
-            const typingIndicator = document.querySelector('.typing-indicator');
-            typingIndicator.style.display = 'none';
         }
 
         chat_send_btn.addEventListener('click', function () {
