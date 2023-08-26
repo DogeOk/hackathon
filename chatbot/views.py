@@ -9,6 +9,7 @@ from gensim.models import Word2Vec
 from pymystem3 import Mystem
 from joblib import dump, load
 import os
+import re
 import numpy as np
 import torch
 import pandas as pd
@@ -30,6 +31,9 @@ def chat_view(request):
 
         faq_file_path = os.path.join(settings.BASE_DIR, 'full_data.csv')
         faq_data = pd.read_csv(faq_file_path)
+
+        if any(char.isdigit() for char in user_message):
+            return HttpResponse(number_questions(user_message, faq_data))
         
         bot_response = find_bot_response(user_message, faq_data)
 
@@ -39,6 +43,40 @@ def chat_view(request):
         }
 
         return HttpResponse(response_data["bot_response"])
+    
+
+def number_questions(user_message, faq_data):
+
+    pattern = r'услуг[аеу]?\s+(\d+)'
+
+    match = re.search(pattern, user_message)
+    service_number = int(match.group(1))
+    
+    matching_questions = {}
+    for index, row in faq_data.iterrows():
+        question = row['question']
+        if str(service_number) in question.lower():
+            matching_questions[index] = question
+
+
+    best_match_index = find_best_matching_question(user_message, 
+                                                   matching_questions)
+    
+    best_match = faq_data.loc[best_match_index, 'answer']
+
+    return best_match
+
+def find_best_matching_question(user_message, matching_questions):
+    tfidf_vectorizer = TfidfVectorizer()
+    tfidf_matrix = tfidf_vectorizer.fit_transform(matching_questions.values()) 
+    user_message_tfidf = tfidf_vectorizer.transform([user_message])
+
+    cosine_similarities = cosine_similarity(user_message_tfidf, tfidf_matrix)
+    best_match_index = cosine_similarities.argmax()
+    best_match_question_index = list(matching_questions.keys())[best_match_index]
+
+    return best_match_question_index
+
 
 
 def create_word2vec_model(faq_data):
@@ -112,9 +150,7 @@ def find_spacy_match(user_message, faq_data):
 
 
 def find_bot_response(user_message, faq_data):
-    
-    m = Mystem()
-    user_message = "".join(m.lemmatize(user_message))[:-1]
+
     # Word2Vec
     word2vec_match = find_word2vec_match(user_message, faq_data)
     max_similarity = 0.7
@@ -128,7 +164,6 @@ def find_bot_response(user_message, faq_data):
 
     #SpaCy
     spacy_match = find_tfidf_match(user_message, faq_data)
-    # print(word2vec_match, levenshtein_match, find_tfidf_match)
 
     best_match = None
     
@@ -143,9 +178,9 @@ def find_bot_response(user_message, faq_data):
     
     if not best_match:
         return "Извините, я не могу понять ваш вопрос."
-    print(best_match)
-    return faq_data.loc[faq_data['question'] == best_match]['answer'].values[0]
 
+    return faq_data.loc[faq_data['question'] == best_match]['answer'].values[0]
+    
 
 def toxic_predict(message):
     PATH = 's-nlp/russian_toxicity_classifier'
