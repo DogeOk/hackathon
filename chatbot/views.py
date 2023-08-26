@@ -5,14 +5,9 @@ import pandas as pd
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.conf import settings
-from llama_index import ServiceContext, LLMPredictor, PromptHelper
-from llama_index.llms import LlamaCPP
-from llama_index.text_splitter import TokenTextSplitter
-from llama_index.node_parser import SimpleNodeParser
 import os
-import pandas as pd
-from langchain.embeddings import HuggingFaceEmbeddings
-from llama_index import GPTVectorStoreIndex, ServiceContext, download_loader, load_index_from_storage
+
+
 def chat_interface(request):
     return render(request, 'chat.html')
 
