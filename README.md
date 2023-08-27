@@ -1,6 +1,6 @@
 # hackathon
 
-Description
+Создание интеллектуального помощника, способного оперативно генерировать ответы из базы знаний и Q&A МФЦ Спб
 
 ## Инструкция по запуску
 1. [Скачать и установить Python](https://www.python.org/downloads/)
@@ -17,11 +17,11 @@ cd hackathon
 python -m venv hackathon
 ```
 5. Активировать виртуальное окружение (если было создано):
-   - Windows:
+   + Windows:
    ```
-   .\hackathon\Scripts\activate
+   .\hackathon\Scripts\activate.ps1
    ```
-   - macOS или Linux:
+   + macOS или Linux:
    ```
    source hackathon/bin/activate
    ```
