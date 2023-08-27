@@ -37,3 +37,12 @@ python -m spacy download ru_core_news_sm
 ```
 python manage.py runserver
 ```
+## Docker
+1. Скачать образ из docker репозитория
+```
+docker pull sellch/ml:tagname
+```
+2. Запустить контейнер
+```
+docker run -d -p 8000:8000 sellch/ml:tagname
+```
