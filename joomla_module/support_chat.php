@@ -1,4 +1,6 @@
 <?php defined('_JEXEC') or die;?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,12 +75,12 @@
         margin: 10px 10px;
         grid-gap: 10px;
     }
-    .chat-client-message div {
+    .chat-client-message .chat-text {
         background: #cea581;
         padding: 15px;
         border-radius: 15px;
         max-width: 60%;
-        word-break: break-word;
+        word-break: normal;
     }
     .chat-support-message {
         justify-self: left;
@@ -89,12 +91,12 @@
         margin: 10px 10px;
         grid-gap: 10px;
     }
-    .chat-support-message div {
+    .chat-support-message .chat-text {
         background-color: #e7d4c2;
         padding: 15px;
         border-radius: 15px;
         max-width: 60%;
-        word-break: break-word;
+        word-break: normal;
     }
     .chat-sender {
         display: grid;
@@ -117,6 +119,45 @@
         align-self: center;
         cursor: pointer;
     }
+    .typing-indicator {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        width: 100%;
+        grid-gap: 7px;
+    }
+
+    .typing-indicator div {
+        background-color: #030100;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+    }
+    #typing-indicator-1 {
+        animation: typing-1 0.75s infinite ease-in-out;
+    }
+    #typing-indicator-2 {
+        animation: typing-2 0.75s infinite ease-in-out;
+    }
+    #typing-indicator-3 {
+        animation: typing-3 0.75s infinite ease-in-out;
+    }
+
+    @keyframes typing-1 {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-6px); }
+        100%  { transform: translateY(0px); }
+    }
+    @keyframes typing-2 {
+        0%  { transform: translateY(-3px); }
+        25%  { transform: translateY(0px); }
+        75% { transform: translateY(-6px); }
+        100% { transform: translateY(-3px); }
+    }
+    @keyframes typing-3 {
+        0%  { transform: translateY(-6px); }
+        50%  { transform: translateY(0px); }
+        100% { transform: translateY(-6px); }
+    }
 </style>
 <body>
     <div class="chat-window">
@@ -126,8 +167,8 @@
         </div>
         <div class="chat-history">
             <div class="chat-support-message">
-                <img class="avatar" src="modules/support_chat/avatar.png" alt="avatar"/>
-                <div>Здраствуйте! Меня зовут Ярослав. Буду рад избавить Вас от страданий и найти необходимую информацию! Пожалуйста, напишите название услуги или ведомства</div>
+                <img class="avatar" src="modules/support_chat/avatar.png" alt="avatar" />
+                <div class="chat-text">Здраствуйте! Меня зовут Ярослав. Буду рад избавить Вас от страданий и найти необходимую информацию! Пожалуйста, напишите название услуги или ведомства</div>
             </div>
         </div>
         <div class="chat-sender">
@@ -186,45 +227,49 @@
             message_row.className = 'chat-client-message';
             message_block = document.createElement('div');
             message_block.innerText = message;
+            message_block.className = 'chat-text';
             avatar = document.createElement('img');
             avatar.className = 'avatar';
-            avatar.setAttribute('src', '/test/modules/support_chat/human.png');
+            avatar.setAttribute('src', 'modules/support_chat/human.png');
             avatar.setAttribute('alt', 'avatar');
             message_row.appendChild(message_block);
             message_row.appendChild(avatar);
             chat_history.appendChild(message_row);
             chat_history.scrollTo(0, chat_history.scrollHeight);
         }
-        function addBotMessage(message) {
+        function addBotMessage() {
             chat_history = document.querySelector('.chat-history');
             message_row = document.createElement('div');
             message_row.className = 'chat-support-message';
             message_block = document.createElement('div');
-            message_block.innerText = message;
+            message_block.className = 'chat-text';
+            message_block.innerHTML = '<div class="typing-indicator"><div id="typing-indicator-1"></div><div id="typing-indicator-2"></div><div id="typing-indicator-3"></div></div>';
             avatar = document.createElement('img');
             avatar.className = 'avatar';
-            avatar.setAttribute('src', '/test/modules/support_chat/avatar.png');
+            avatar.setAttribute('src', 'modules/support_chat/avatar.png');
             avatar.setAttribute('alt', 'avatar');
             message_row.appendChild(avatar);
             message_row.appendChild(message_block);
             chat_history.appendChild(message_row);
             chat_history.scrollTo(0, chat_history.scrollHeight);
+            xhr = new XMLHttpRequest();
+            xhr.open('POST', 'http://46.187.63.32/chat')
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    message_block.innerText = xhr.responseText;
+                }
+            }
+            xhr.send('message=' + chat_input.value);
         }
         function sendMessage() {
             if (chat_input.value != '') {
                 addUserMessage(chat_input.value);
-                xhr = new XMLHttpRequest();
-                xhr.open('POST', 'http://localhost/bot')
-                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        addBotMessage(xhr.responseText);
-                    }
-                }
-                xhr.send('message=' + chat_input.value);
+                addBotMessage();
                 chat_input.value = '';
             }
         }
+
         chat_send_btn.addEventListener('click', function () {
             sendMessage();
         }, false);
