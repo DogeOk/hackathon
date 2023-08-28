@@ -4,15 +4,16 @@
 
 ## Команда
 
-Frontend&Modelling:[Анатолий Сояров](https://github.com/DogeOk)
+Frontend&Modelling: [Анатолий Сояров](https://github.com/DogeOk)
 
-Analysis&Concept&Presentation:[Марианна Попова](https://github.com/neunerin)
+Analysis&Concept&Presentation: [Марианна Попова](https://github.com/neunerin)
 
-Testing&Debugging:[Кирилл Пушкарин](https://github.com/step8rother)
+Testing&Debugging: [Кирилл Пушкарин](https://github.com/step8rother)
 
-Backend&Model Production:[Мила Рыбалко](https://github.com/ludryb)
+Backend&Model Production: [Мила Рыбалко](https://github.com/ludryb)
 
-Model Production&Docker[Ярослав Лускань](https://github.com/Sellch)
+Model Production&Docker: [Ярослав Лускань](https://github.com/Sellch)
+
 
 ## Инструкция по запуску
 1. [Скачать и установить Python](https://www.python.org/downloads/)
