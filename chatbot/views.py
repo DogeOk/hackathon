@@ -56,7 +56,7 @@ def number_questions(user_message, faq_data):
     pattern = r'услуг[аеу]?\s+(\d+)'
 
     match = re.search(pattern, user_message)
-    service_number = int(match.group(1))
+    service_number = match.group(1)
     
     matching_questions = {}
     for index, row in faq_data.iterrows():
@@ -64,13 +64,14 @@ def number_questions(user_message, faq_data):
         if str(service_number) in question.lower():
             matching_questions[index] = question
 
-
-    best_match_index = find_best_matching_question(user_message, 
+    try:
+        best_match_index = find_best_matching_question(user_message, 
                                                    matching_questions)
-    
-    best_match = faq_data.loc[best_match_index, 'answer']
-
-    return best_match
+        best_match = faq_data.loc[best_match_index, 'answer']
+        
+        return best_match
+    except:
+        return not_found_answer
 
 def find_best_matching_question(user_message, matching_questions):
     tfidf_vectorizer = TfidfVectorizer()
