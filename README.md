@@ -2,18 +2,6 @@
 
 Создание интеллектуального помощника, способного оперативно генерировать ответы из базы знаний и Q&A МФЦ Спб
 
-## Команда
-
-Frontend&Modelling: [Анатолий Сояров](https://github.com/DogeOk)
-
-Analysis&Concept&Presentation: [Марианна Попова](https://github.com/neunerin)
-
-Testing&Debugging: [Кирилл Пушкарин](https://github.com/step8rother)
-
-Backend&Model Production: [Мила Рыбалко](https://github.com/ludryb)
-
-Model Production&Docker: [Ярослав Лускань](https://github.com/Sellch)
-
 
 ## Инструкция по запуску
 1. [Скачать и установить Python](https://www.python.org/downloads/)
@@ -59,3 +47,15 @@ docker pull sellch/ml:tagname
 ```
 docker run -d -p 8000:8000 sellch/ml:tagname
 ```
+
+## Команда
+
+Frontend&Modelling: [Анатолий Сояров](https://github.com/DogeOk)
+
+Analysis&Concept&Presentation: [Марианна Попова](https://github.com/neunerin)
+
+Testing&Debugging: [Кирилл Пушкарин](https://github.com/step8rother)
+
+Backend&Model Production: [Мила Рыбалко](https://github.com/ludryb)
+
+Model Production&Docker: [Ярослав Лускань](https://github.com/Sellch)
