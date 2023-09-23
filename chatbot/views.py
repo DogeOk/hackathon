@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from fuzzywuzzy import fuzz
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -14,7 +14,7 @@ import torch
 import pandas as pd
 import spacy
 import transformers
-
+import snoop
 
 toxic_answer = (f"Ай-яй-яй, как некрасиво! Вы же в культурной столице! " 
                 f"Введите, пожалуйста, корректный запрос 🤓")
@@ -29,28 +29,56 @@ def chat_interface(request):
 
 @csrf_exempt
 def chat_view(request):
-    if request.method == 'POST':
-        user_message = request.POST.get("message", "").lower()
+    user_message = request.POST.get("message", "").lower()
 
-        if toxic_predict(user_message):
-            return HttpResponse(toxic_answer)
-
-        faq_file_path = os.path.join(settings.BASE_DIR, 'full_data.csv')
-        faq_data = pd.read_csv(faq_file_path)
-
-        if any(char.isdigit() for char in user_message):
-            return HttpResponse(number_questions(user_message, faq_data))
-        
-        bot_response = find_bot_response(user_message, faq_data)
-
-        response_data = {
-            "user_message": user_message,
-            "bot_response": bot_response,
-        }
-
-        return HttpResponse(response_data["bot_response"])
+    if toxic_predict(user_message):
+        return HttpResponse(toxic_answer)
     
+    # if action == "process_response":
 
+    #     return process_response(user_message)
+
+
+    faq_file_path = os.path.join(settings.BASE_DIR, 'full_data.csv')
+    faq_data = pd.read_csv(faq_file_path)
+
+    # if any(char.isdigit() for char in user_message):
+    #     return HttpResponse(number_questions(user_message, faq_data))
+    # if action == "clarification":
+    #     return handle_clarification(user_message, faq_data)
+    # else:
+    #     return handle_regular_question(user_message, faq_data)
+    bot_response = find_bot_response(user_message, faq_data)
+    # global levenshtein_a
+    # levenshtein_a, levenshtein_q = find_levenshtein_match(user_message, faq_data)
+
+    response_data = {
+        "user_message": user_message,
+        "bot_response": bot_response,  
+    }
+
+    return HttpResponse(response_data["bot_response"])
+    
+# def process_response(client_response):
+#     # Здесь обрабатываем ответ клиента
+#     if client_response == "да":
+#         # Обработка для "Да"
+#         bot_response = levenshtein_a
+#     elif client_response == "нет":
+#         # Обработка для "Нет"
+#         # Продолжаем с find_tfidf_match
+#         tfidf_a, tfidf_q = find_tfidf_match(user_message, faq_data)
+#         bot_response = tfidf_q
+
+#     response_data = {
+#         "user_message": client_response,
+#         "bot_response": bot_response,
+#         "action": "process_response"  # Указываем action для обработки следующего ответа клиента
+#     }
+
+#     return JsonResponse({"response": response_data})
+    
+# Question with number
 def number_questions(user_message, faq_data):
 
     pattern = r'услуг[аеу]?\s+(\d+)'
@@ -86,41 +114,23 @@ def find_best_matching_question(user_message, matching_questions):
 
 
 
-def create_word2vec_model(faq_data):
-    sentences = [text.split() for text in faq_data['question']]
-    model = Word2Vec(sentences, vector_size=100, window=5, min_count=1, sg=0)
-    return model
-
-
-def find_word2vec_match(user_message, faq_data):
-    user_tokens = user_message.split()
-    similarity = -1
-    best_match = None
-    model = create_word2vec_model(faq_data)
-
-    for question in model.wv.index_to_key:
-        question_tokens = question.split()
-        sim = model.wv.n_similarity(user_tokens, question_tokens)
-        if sim > similarity:
-            similarity = sim
-            best_match = question
-
-    return best_match
-
-
+# Levenshtein algothim
 def find_levenshtein_match(user_message, faq_data):
-    best_match = None
+    best_answer = None
     max_similarity = 0
 
     for question in faq_data['question']:
         similarity = fuzz.ratio(user_message, question)
         if similarity > max_similarity:
             max_similarity = similarity
-            best_match = question
+            best_question = question
+        
+    best_answer = faq_data.loc[faq_data['question'] == best_question]['answer']\
+                .values[0]
 
-    return best_match
+    return best_answer, best_question
 
-
+# TF-IDF algothim
 def find_tfidf_match(user_message, faq_data):
     tfidf_vectorizer = TfidfVectorizer()
     faq_questions = faq_data['question']
@@ -131,63 +141,41 @@ def find_tfidf_match(user_message, faq_data):
     cosine_similarities = cosine_similarity(user_message_tfidf, tfidf_matrix)
 
     best_match_index = cosine_similarities.argmax()
-    best_match_response = faq_data['answer'].iloc[best_match_index]
+    best_answer = faq_data['answer'].iloc[best_match_index]
+    best_question = faq_data['question'].iloc[best_match_index]
 
-    return best_match_response
-
-
-def find_spacy_match(user_message, faq_data):
-    best_match = None
-    max_similarity = 0.0
-    nlp = spacy.load("ru_core_news_sm")
-    for index, row in faq_data.iterrows():
-        question = row['question'].lower()
-        response = row['answer']
-
-        doc_user = nlp(user_message)
-        doc_question = nlp(question)
-
-        similarity = doc_user.similarity(doc_question)
-
-        if similarity > max_similarity:
-            max_similarity = similarity
-            best_match = response
-
-    return best_match
+    return best_answer, best_question
 
 
+@snoop
 def find_bot_response(user_message, faq_data):
-
-    # Word2Vec
-    word2vec_match = find_word2vec_match(user_message, faq_data)
-    max_similarity = 0.7
-    
+  
     # Левенштейн
-    levenshtein_match = find_levenshtein_match(user_message, faq_data)
-    levenshtein_similarity = fuzz.ratio(user_message, levenshtein_match) / 100  
-    
+    levenshtein_a, levenshtein_q = find_levenshtein_match(user_message, faq_data) 
+
     # TF-IDF
-    tfidf_match = find_tfidf_match(user_message, faq_data)
-
-    #SpaCy
-    spacy_match = find_tfidf_match(user_message, faq_data)
-
-    best_match = None  
+    tfidf_match_a, tfidf_match_q = find_tfidf_match(user_message, faq_data)
     
-    try:
-        if levenshtein_similarity > max_similarity:
-            best_match = levenshtein_match
-        elif word2vec_match:
-            best_match = word2vec_match
-        elif tfidf_match:
-            best_match = tfidf_match
-        else:
-            best_match = spacy_match   
+    #LangChain
+    loaded_svm_retriever = load(os.path.join(settings.BASE_DIR, 
+                                            "svm_retriever.pkl"))
+    docs_svm=loaded_svm_retriever.get_relevant_documents(user_message)
 
-        return (faq_data.loc[faq_data['question'] == best_match]['answer']\
-                .values[0])
+    try:
+        return(levenshtein_a)
     except IndexError:
-        return(not_found_answer) 
+        try:
+            return(tfidf_match_a)
+        except:
+            try:
+                for i in range(len(docs_svm)):
+                    try:
+                        return docs_svm[i].metadata["answer"]
+                    except:
+                        pass
+            except:
+                return(not_found_answer)
+
    
 
 def toxic_predict(message):
